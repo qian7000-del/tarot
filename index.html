@@ -3,98 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>灵境塔罗 - 22张大阿卡纳版</title>
+    <title>灵境塔罗 - 三牌阵占卜</title>
     <style>
-        :root { --bg: #0b0d17; --gold: #c5a059; --text: #e0e0e0; }
-        body { background: var(--bg); color: var(--text); font-family: "PingFang SC", "Microsoft YaHei", sans-serif; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
-        h1 { color: var(--gold); letter-spacing: 4px; text-shadow: 0 0 10px rgba(197, 160, 89, 0.5); }
-        .card-container { width: 180px; height: 300px; perspective: 1000px; margin: 30px 0; cursor: pointer; }
-        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        :root { --bg: #05070a; --gold: #d4af37; --text: #f0f0f0; --card-w: 120px; --card-h: 210px; }
+        body { background: var(--bg); color: var(--text); font-family: "serif"; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 10px; }
+        
+        h1 { color: var(--gold); letter-spacing: 6px; margin-bottom: 5px; text-shadow: 0 0 15px rgba(212, 175, 55, 0.4); }
+        .subtitle { font-size: 0.9em; opacity: 0.7; margin-bottom: 20px; }
+
+        /* 三牌阵容器 */
+        .spread { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px; }
+        .slot { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .slot-label { color: var(--gold); font-weight: bold; font-size: 0.9em; }
+
+        /* 卡片基础样式 */
+        .card { width: var(--card-w); height: var(--card-h); perspective: 1000px; cursor: pointer; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s; transform-style: preserve-3d; }
         .is-flipped { transform: rotateY(180deg); }
-        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; border: 2px solid var(--gold); display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .card-back { background: #1a1c2c; background-image: repeating-linear-gradient(45deg, #161826 0, #161826 10px, #1a1c2c 10px, #1a1c2c 20px); }
-        .card-front { background: #fff; color: #222; transform: rotateY(180deg); overflow: hidden; }
-        #card-icon { font-size: 70px; transition: transform 0.5s; }
-        #result-box { max-width: 500px; text-align: center; visibility: hidden; opacity: 0; transition: 0.5s; }
-        .meaning-title { color: var(--gold); font-size: 1.2em; margin-bottom: 10px; }
-        button { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; margin-top: 15px; }
-        button:hover { background: var(--gold); color: #fff; }
+
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; border: 1px solid var(--gold); box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        
+        /* 卡背：使用神秘几何纹理 */
+        .card-back { background: #1a1a2e; display: flex; justify-content: center; align-items: center; font-size: 2em; }
+        
+        /* 卡面：显示真实图片 */
+        .card-front { background: #000; transform: rotateY(180deg); overflow: hidden; }
+        .card-front img { width: 100%; height: 100%; object-fit: cover; }
+        .reversed { transform: rotate(180deg); }
+
+        /* 解释文本区 */
+        #interpretation { max-width: 800px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; display: none; margin-top: 20px; border-top: 1px solid var(--gold); }
+        .inter-item { margin-bottom: 15px; border-bottom: 1px dashed #444; padding-bottom: 10px; }
+        .inter-item b { color: var(--gold); }
+
+        button { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 10px 30px; border-radius: 5px; cursor: pointer; font-size: 1em; margin-top: 20px; }
+        button:hover { background: var(--gold); color: #000; }
+        
+        @media (max-width: 450px) { :root { --card-w: 100px; --card-h: 175px; } }
     </style>
 </head>
 <body>
 
     <h1>灵境塔罗</h1>
-    <p style="font-size: 0.9em; opacity: 0.8;">闭上双眼，默想问题，点击卡片</p>
+    <p class="subtitle">过去 · 现在 · 未来</p>
 
-    <div class="card-container" onclick="drawCard()">
-        <div class="card-inner" id="card-inner">
-            <div class="card-face card-back"><div style="font-size: 40px;">🔯</div></div>
-            <div class="card-face card-front">
-                <div id="card-icon">🃏</div>
-                <h3 id="card-name" style="margin: 10px 0 0 0;">牌名</h3>
-            </div>
+    <div class="spread">
+        <div class="slot">
+            <span class="slot-label">过去</span>
+            <div class="card" onclick="flip(0)"><div class="card-inner" id="c0"><div class="card-face card-back">🔮</div><div class="card-face card-front" id="f0"></div></div></div>
+        </div>
+        <div class="slot">
+            <span class="slot-label">现在</span>
+            <div class="card" onclick="flip(1)"><div class="card-inner" id="c1"><div class="card-face card-back">🔮</div><div class="card-face card-front" id="f1"></div></div></div>
+        </div>
+        <div class="slot">
+            <span class="slot-label">未来</span>
+            <div class="card" onclick="flip(2)"><div class="card-inner" id="c2"><div class="card-face card-back">🔮</div><div class="card-face card-front" id="f2"></div></div></div>
         </div>
     </div>
 
-    <div id="result-box">
-        <div class="meaning-title" id="res-title">牌意解析</div>
-        <p id="res-desc" style="line-height: 1.6;"></p>
-        <button onclick="resetCard()">再次占卜</button>
-    </div>
+    <button onclick="shuffleDeck()">重新洗牌</button>
+
+    <div id="interpretation"></div>
 
     <script>
-        const deck = [
-            { n: "愚者", i: "🃏", m: "新的起点、冒险精神、无限可能。" },
-            { n: "魔术师", i: "🧙", m: "创造力、掌控资源、行动的时刻。" },
-            { n: "女祭司", i: "🌙", m: "直觉、内在智慧、静候时机。" },
-            { n: "皇后", i: "👸", m: "丰饶、母爱、感官的愉悦与生命力。" },
-            { n: "皇帝", i: "👑", m: "秩序、权力、坚定的意志与领导力。" },
-            { n: "教皇", i: "⛪", m: "传统、寻求建议、精神上的指引。" },
-            { n: "恋人", i: "💕", m: "选择、合一、价值观的契合。" },
-            { n: "战车", i: "⚔️", m: "意志力、胜利、克服障碍的前进。" },
-            { n: "力量", i: "🦁", m: "勇气、温柔的掌控、内心的强大。" },
-            { n: "隐士", i: "🕯️", m: "自省、独处、寻找内心的真理。" },
-            { n: "命运之轮", i: "🎡", m: "契机、好运、无法抗拒的改变。" },
-            { n: "正义", i: "⚖️", m: "公平、因果、诚实面对责任。" },
-            { n: "倒吊人", i: "🙃", m: "牺牲、换位思考、等待中的觉醒。" },
-            { n: "死神", i: "💀", m: "终结、转型、旧事物的告别。" },
-            { n: "节制", i: "🍶", m: "平衡、融合、适度与和谐。" },
-            { n: "恶魔", i: "😈", m: "欲望、束缚、物质主义的诱惑。" },
-            { n: "高塔", i: "⚡", m: "剧变、幻象破灭、突如其来的冲击。" },
-            { n: "星星", i: "⭐", m: "希望、疗愈、宁静的灵感。" },
-            { n: "月亮", i: "🌕", m: "不安、幻觉、潜意识中的恐惧。" },
-            { n: "太阳", i: "☀️", m: "快乐、成功、充满活力的真理。" },
-            { n: "审判", i: "🎺", m: "觉醒、反省、迎接新的呼唤。" },
-            { n: "世界", i: "🌍", m: "达成、圆满、旅程的完美终点。" }
-        ];
+        // 构建 78 张牌数据
+        const suits = ['wands', 'cups', 'swords', 'pentacles'];
+        const courtCards = ['Page', 'Knight', 'Queen', 'King'];
+        let fullDeck = [];
 
-        let active = false;
+        // 1. 大阿卡纳 (0-21)
+        const majors = ["The Fool","The Magician","The High Priestess","The Empress","The Emperor","The Hierophant","The Lovers","The Chariot","Strength","The Hermit","Wheel of Fortune","Justice","The Hanged Man","Death","Temperance","The Devil","The Tower","The Star","The Moon","The Sun","Judgement","The World"];
+        majors.forEach((name, i) => {
+            fullDeck.push({ name, img: `m${i < 10 ? '0'+i : i}`, type: 'Major' });
+        });
 
-        function drawCard() {
-            if (active) return;
-            const card = deck[Math.floor(Math.random() * deck.length)];
-            const isRev = Math.random() > 0.5;
+        // 2. 小阿卡纳 (56张)
+        suits.forEach(suit => {
+            // 数字牌 1(Ace)-10
+            for(let i=1; i<=10; i++) {
+                let n = i === 1 ? 'Ace' : i;
+                fullDeck.push({ name: `${n} of ${suit}`, img: `${suit.charAt(0)}${i < 10 ? '0'+i : i}`, type: 'Minor' });
+            }
+            // 宫廷牌
+            courtCards.forEach((role, index) => {
+                fullDeck.push({ name: `${role} of ${suit}`, img: `${suit.charAt(0)}${11+index}`, type: 'Minor' });
+            });
+        });
 
-            document.getElementById('card-name').innerText = card.n + (isRev ? " (逆位)" : " (正位)");
-            document.getElementById('card-icon').innerText = card.i;
-            document.getElementById('card-icon').style.transform = isRev ? "rotate(180deg)" : "rotate(0deg)";
-            
-            document.getElementById('res-desc').innerText = isRev ? "【逆位】意味能量受阻或过度发展：" + card.m : "【正位】象征积极正向的能量：" + card.m;
-            
-            document.getElementById('card-inner').classList.add('is-flipped');
-            const res = document.getElementById('result-box');
-            res.style.visibility = 'visible';
-            res.style.opacity = '1';
-            active = true;
+        let drawnCards = [null, null, null];
+        let flippedCount = 0;
+
+        function shuffleDeck() {
+            location.reload(); // 最简单的重置方式
         }
 
-        function resetCard() {
-            document.getElementById('card-inner').classList.remove('is-flipped');
-            document.getElementById('result-box').style.opacity = '0';
-            setTimeout(() => { 
-                document.getElementById('result-box').style.visibility = 'hidden';
-                active = false; 
-            }, 500);
+        function flip(index) {
+            if (drawnCards[index]) return;
+
+            // 随机抽取一张没抽过的牌
+            let card;
+            do {
+                card = fullDeck[Math.floor(Math.random() * fullDeck.length)];
+            } while (drawnCards.includes(card));
+
+            const isReversed = Math.random() > 0.5;
+            drawnCards[index] = { ...card, isReversed };
+
+            // 设置图片 (引用维特塔罗开源图库)
+            // 图片路径规则：m00.jpg 是大牌，w01.jpg 是权杖Ace
+            const imgUrl = `https://www.sacred-texts.com/tarot/pkt/img/${card.img}.jpg`;
+            const frontEl = document.getElementById(`f${index}`);
+            frontEl.innerHTML = `<img src="${imgUrl}" class="${isReversed ? 'reversed' : ''}">`;
+
+            // 执行翻转
+            document.getElementById(`c${index}`).classList.add('is-flipped');
+            
+            flippedCount++;
+            if (flippedCount === 3) showMeaning();
+        }
+
+        function showMeaning() {
+            const interDiv = document.getElementById('interpretation');
+            interDiv.style.display = 'block';
+            const labels = ["过去", "现在", "未来"];
+            
+            let html = '<h3 style="color:var(--gold); text-align:center;">--- 启示录 ---</h3>';
+            drawnCards.forEach((c, i) => {
+                html += `
+                    <div class="inter-item">
+                        <b>${labels[i]} - ${c.name} ${c.isReversed ? '(逆位)' : '(正位)'}</b><br>
+                        <span style="font-size:0.9em; opacity:0.8;">
+                            ${getBasicMeaning(c.name, c.isReversed)}
+                        </span>
+                    </div>
+                `;
+            });
+            interDiv.innerHTML = html;
+        }
+
+        function getBasicMeaning(name, isRev) {
+            // 这里可以扩充更详细的 78*2 种解释。目前做一个通用逻辑：
+            const base = "这张牌出现在这里，预示着";
+            if (!isRev) return base + ` ${name} 的能量正在正向引导你，建议保持专注，顺势而为。`;
+            return base + ` ${name} 的能量目前处于阻碍或反转状态，提醒你需要换个角度思考，或者暂缓行动。`;
         }
     </script>
 </body>
